@@ -1,0 +1,30 @@
+# Docker Compose File
+
+services:
+  task-db:
+    container_name: task-db
+    image: postgres:latest
+    environment:
+      POSTGRES_DB: task_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: root
+      PGDATA: /data/postgres
+    networks:
+      - task-organizer
+    ports:
+      - 5432:5432
+
+  task-org-service:
+    build: "."
+    container_name: task-org-service
+    depends_on:
+      - task-db
+    networks:
+      - task-organizer
+    ports:
+      - 9091:9091
+    environment:
+      - "SPRING_PROFILES_ACTIVE=prod"
+
+networks:
+  task-organizer:

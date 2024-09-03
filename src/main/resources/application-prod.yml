@@ -1,0 +1,25 @@
+# Port Configuration
+server:
+  port: 9091
+
+# Datasource properties
+spring:
+  application:
+    name: task-scheduler
+  datasource:
+    url: jdbc:postgresql://task-db:5432/task_db?createDatabaseIfNotExist=true
+    username: postgres
+    password: root
+  jpa:
+    show-sql: true
+    hibernate.ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+
+#JWT ARGS
+security:
+  jwt:
+    secret-key: 3cfa76ef14937c1c0ea519f8fc057a80fcd04a7420f8e8bcd0a7567c272e007b
+    expiration-time: 86400000
