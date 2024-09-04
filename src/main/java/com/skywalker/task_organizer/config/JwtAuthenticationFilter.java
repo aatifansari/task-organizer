@@ -67,10 +67,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 }
             }
             filterChain.doFilter(request, response);
-        }catch(ExpiredJwtException e){
-            LOGGER.error("Token Expired {} ", e);
-        }catch(InvalidContentTypeException e){
-            LOGGER.error("Invalid Content {} ", e);
         }catch (Exception e) {
             LOGGER.error("Error", e);
             handlerExceptionResolver.resolveException(request, response, null, e);
