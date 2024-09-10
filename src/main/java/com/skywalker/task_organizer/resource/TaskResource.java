@@ -5,6 +5,7 @@ import com.skywalker.task_organizer.dto.TaskDto;
 import com.skywalker.task_organizer.entity.TaskStatus;
 import com.skywalker.task_organizer.entity.User;
 import com.skywalker.task_organizer.service.TaskService;
+import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,7 +31,7 @@ public class TaskResource {
     }
 
     @PostMapping(consumes = { MediaType.APPLICATION_JSON_VALUE})
-    protected ResponseEntity<TaskDto> createTask(@RequestBody TaskDto taskDto,
+    protected ResponseEntity<TaskDto> createTask(@Valid  @RequestBody TaskDto taskDto,
                                 RedirectAttributes redirectAttributes,
                                 @AuthenticationPrincipal User user){
         String loggedInUser = user.getUserId();
@@ -58,7 +59,7 @@ public class TaskResource {
 
     @PutMapping("/{id}")
     protected ResponseEntity<TaskDto> updateTask(@PathVariable(name = "id") String taskId,
-                                                 @RequestBody TaskDto taskDto,
+                                                 @Valid @RequestBody TaskDto taskDto,
                                                  @AuthenticationPrincipal User user) {
         String loggedInUser = user.getUserId();
         return ResponseEntity.ok(taskService.update(taskId, taskDto, loggedInUser));

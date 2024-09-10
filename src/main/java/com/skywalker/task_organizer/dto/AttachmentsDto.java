@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Builder
 public class AttachmentsDto {
-
+    
     private String id;
     private String taskId;
     private String originalFilename;

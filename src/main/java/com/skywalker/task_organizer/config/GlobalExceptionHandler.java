@@ -3,38 +3,35 @@ package com.skywalker.task_organizer.config;
 import com.skywalker.task_organizer.exception.BadRequestException;
 import com.skywalker.task_organizer.exception.EntityNotFoundException;
 import io.jsonwebtoken.ExpiredJwtException;
-import org.springframework.beans.factory.parsing.Problem;
+import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AccountStatusException;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.nio.file.AccessDeniedException;
 import java.security.SignatureException;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.*;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    @ExceptionHandler(value = BadRequestException.class)
-    public ResponseEntity<Map<String,Object>> handleEntityNotFoundException(EntityNotFoundException e){
-        Map<String,Object> map = new LinkedHashMap<>();
-        map.put("message", "Entity not found");
-        map.put("reason", e.getMessage());
-        return new ResponseEntity<>(map, HttpStatus.NOT_FOUND);
-    }
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<?> notValid(MethodArgumentNotValidException ex, HttpServletRequest request) {
+        List<String> errors = new ArrayList<>();
 
-    @ExceptionHandler(value = EntityNotFoundException.class)
-    public ResponseEntity<Map<String, Object>> handleBadRequestException(BadRequestException e){
-        Map<String, Object> map = new LinkedHashMap<>();
-        map.put("message", "Bad Request");
-        map.put("reason", e.getMessage());
-        return new ResponseEntity<>(map, HttpStatus.BAD_REQUEST);
+        ex.getAllErrors().forEach(err -> errors.add(err.getDefaultMessage()));
+
+        Map<String, List<String>> result = new HashMap<>();
+        result.put("errors", errors);
+
+        return new ResponseEntity<>(result, HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler(Exception.class)
@@ -66,6 +63,26 @@ public class GlobalExceptionHandler {
         if(exception instanceof ExpiredJwtException){
             errorDetail = ProblemDetail.forStatusAndDetail(HttpStatusCode.valueOf(403), exception.getMessage());
             errorDetail.setProperty("description", "JWT token has expired");
+        }
+
+        if(exception instanceof BadRequestException){
+            errorDetail = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, exception.getMessage());
+            errorDetail.setProperty("reason", "Bad Request");
+        }
+
+        if(exception instanceof EntityNotFoundException){
+            errorDetail = ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, exception.getMessage());
+            errorDetail.setProperty("reason", "Resource not found");
+        }
+
+        if(exception instanceof DataIntegrityViolationException){
+            if(exception.getMessage().contains("assignee_id")){
+                errorDetail = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, exception.getMessage());
+                errorDetail.setProperty("reason", "Invalid Assignee");
+            }else {
+                errorDetail = ProblemDetail.forStatus(HttpStatus.BAD_REQUEST);
+                errorDetail.setProperty("reason", "Check Request Body");
+            }
         }
 
         if(errorDetail == null){

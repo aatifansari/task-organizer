@@ -1,7 +1,7 @@
 package com.skywalker.task_organizer.service;
 
-import com.skywalker.task_organizer.dto.LoginForm;
-import com.skywalker.task_organizer.dto.RegisterForm;
+import com.skywalker.task_organizer.dto.LoginRequest;
+import com.skywalker.task_organizer.dto.RegistrationForm;
 import com.skywalker.task_organizer.entity.Address;
 import com.skywalker.task_organizer.entity.User;
 import com.skywalker.task_organizer.repository.UserRepository;
@@ -28,7 +28,7 @@ public class AuthenticationService {
         this.authenticationManager = authenticationManager;
     }
 
-    public User signup(RegisterForm registerForm) {
+    public User signup(RegistrationForm registerForm) {
         LOGGER.info("Register Form : {}", registerForm);
         var addressForm = registerForm.getAddressForm();
         String userId = UUID.randomUUID().toString();
@@ -67,11 +67,11 @@ public class AuthenticationService {
         return userRepository.save(user);
     }
 
-    public User authenticate(LoginForm loginForm){
+    public User authenticate(LoginRequest loginRequest){
         authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(loginForm.getEmail(), loginForm.getPassword())
+                new UsernamePasswordAuthenticationToken(loginRequest.getEmail(), loginRequest.getPassword())
         );
-        return userRepository.findByEmail(loginForm.getEmail()).orElseThrow();
+        return userRepository.findByEmail(loginRequest.getEmail()).orElseThrow();
     }
 
 

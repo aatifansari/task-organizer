@@ -1,6 +1,7 @@
 package com.skywalker.task_organizer.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -33,11 +34,11 @@ public class User implements UserDetails {
     private String email;
 
     @Column(nullable = false)
-    private Integer isdCode;
+    private String isdCode;
 
-    @Column(nullable = false)
-    private Long phoneNumber;
-
+    @Column(name = "phone_no", nullable = false)
+    @Size(min = 10, max = 10, message = "Phone number should be of 10 digits")
+    private String phoneNumber;
 
     private String faxNumber;
 
@@ -50,16 +51,16 @@ public class User implements UserDetails {
 
     private boolean isDeleted;
 
-    @Column(name="crtd_at")
+    @Column(name="crtd_at", nullable = false)
     private Instant createdAt;
 
-    @Column(name="crtd_by")
+    @Column(name="crtd_by", nullable = false)
     private String createdBy;
 
-    @Column(name="uptd_at")
+    @Column(name="uptd_at", nullable = false)
     private Instant updatedAt;
 
-    @Column(name="uptd_by")
+    @Column(name="uptd_by", nullable = false)
     private String updatedBy;
 
     @Override

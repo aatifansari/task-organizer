@@ -2,10 +2,14 @@ package com.skywalker.task_organizer.entity;
 
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.format.annotation.DateTimeFormat;
 
 import java.time.Instant;
 import java.util.Date;
@@ -20,9 +24,18 @@ public class Task {
 
     @Id
     private String id;
+
+    @NotBlank(message = "Title is mandatory")
+    @Size(min = 3, max = 256, message = "Title must be from 3 to 256  characters.")
     private String title;
+
+    @Size(max = 500, message = "First Name must be less than 500 characters.")
     private String description;
+
     private TaskStatus taskStatus;
+
+    @NotNull(message = "Date is required.")
+    @DateTimeFormat(pattern = "yyyy-MM-dd")
     private Date date;
     @OneToMany(mappedBy="task", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonManagedReference
@@ -31,14 +44,22 @@ public class Task {
     @OneToMany(mappedBy="task", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonManagedReference
     private Set<Comment> comments;
-    private String assignee;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "assignee_id")
+    private User assignee;
+
     private boolean isDeleted;
+
     @Column(name="crtd_at")
     private Instant createdAt;
+
     @Column(name="crtd_by")
     private String createdBy;
+
     @Column(name="uptd_at")
     private Instant updatedAt;
+
     @Column(name="uptd_by")
     private String updatedBy;
 

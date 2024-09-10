@@ -3,23 +3,21 @@ package com.skywalker.task_organizer.service;
 import com.skywalker.task_organizer.dto.AttachmentsDto;
 import com.skywalker.task_organizer.dto.CommentDto;
 import com.skywalker.task_organizer.dto.TaskDto;
-import com.skywalker.task_organizer.entity.Attachment;
-import com.skywalker.task_organizer.entity.Comment;
-import com.skywalker.task_organizer.entity.Task;
-import com.skywalker.task_organizer.entity.TaskStatus;
+import com.skywalker.task_organizer.entity.*;
 import com.skywalker.task_organizer.exception.BadRequestException;
 import com.skywalker.task_organizer.exception.EntityNotFoundException;
 import com.skywalker.task_organizer.exception.UnauthorizedAccessException;
 import com.skywalker.task_organizer.repository.AttachmentRepository;
 import com.skywalker.task_organizer.repository.CommentRepository;
 import com.skywalker.task_organizer.repository.TaskRepository;
+import com.skywalker.task_organizer.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.context.config.ConfigDataResourceNotFoundException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.time.Instant;
 import java.util.*;
@@ -34,36 +32,50 @@ public class TaskService {
     private final TaskRepository taskRepository;
     private final AttachmentRepository attachmentRepository;
     private final CommentRepository commentRepository;
+    private final UserRepository userRepository;
 
     @Autowired
     public TaskService(StorageService storageService, TaskRepository taskRepository,
-                       AttachmentRepository attachmentRepository, CommentRepository commentRepository ){
+                       AttachmentRepository attachmentRepository, CommentRepository commentRepository,
+                       UserRepository userRepository){
         this.storageService = storageService;
         this.taskRepository = taskRepository;
         this.attachmentRepository = attachmentRepository;
         this.commentRepository = commentRepository;
+        this.userRepository = userRepository;
     }
 
     @Transactional
     public TaskDto create(TaskDto taskDto, String loggedInUser){
+        // validate assignee
+//        User assignee = null;
+//        if(taskDto.getAssignee() != null){
+//            assignee = userRepository.getReferenceById(taskDto)  findById(taskDto.getAssignee())
+//                    .orElseThrow(() -> new EntityNotFoundException("Invalid Assignee"));
+//        }else{
+//            assignee = new User();
+//            assignee.setUserId(loggedInUser);
+//        }
         Task task = mapDtoToTask(taskDto, loggedInUser);
         task.setId(UUID.randomUUID().toString());
-        task.setTaskStatus(TaskStatus.STARTED);
         task.setCreatedAt(Instant.now());
         task.setCreatedBy(loggedInUser);
         Set<Attachment> attachments = new HashSet<>();
-        taskDto.getAttachmentsDtos().forEach(attachmentDto ->{
-            Attachment attachment = attachmentRepository.findById(attachmentDto.getId()).orElseThrow(EntityNotFoundException::new);
-            attachment.setTask(task);
-            attachments.add(attachment);
-        });
+        Optional.ofNullable(taskDto.getAttachmentsDtos()).orElse(Collections.emptyList())
+                .stream()
+                .filter(Objects::nonNull)
+                .forEach(attachmentDto -> {
+                    Attachment attachment = attachmentRepository.findById(attachmentDto.getId()).orElseThrow(EntityNotFoundException::new);
+                    attachment.setTask(task);
+                    attachments.add(attachment);
+                });
 
         Set<Comment> comments = taskDto.getComments()
                 .stream()
                 .map(s-> mapDtoToComment(s.getComment(), taskDto.getAssignee(), task))
                 .collect(Collectors.toSet());
-        task.setComments(comments);
-        task.setAttachments(attachments);
+//        task.setComments(comments);
+//        task.setAttachments(attachments);
         Task savedTask = taskRepository.save(task);
         return mapTaskToDto(savedTask);
 
@@ -154,14 +166,15 @@ public class TaskService {
         return taskDto;
     }
 
-    private Task mapDtoToTask(TaskDto taskDto, String loggedInUser){
+    private Task mapDtoToTask(TaskDto taskDto, String loggedInUser) {
 
         return Task.builder()
                 .title(taskDto.getTitle())
                 .description(taskDto.getDescription())
-                .date(new Date())
-                .taskStatus(taskDto.getTaskStatus())
-                .assignee(taskDto.getAssignee())
+                .taskStatus(taskDto.getTaskStatus() != null ? taskDto.getTaskStatus() : TaskStatus.STARTED)
+                .assignee(userRepository.getReferenceById(taskDto.getAssignee() != null ? taskDto.getAssignee() : loggedInUser))
+                .date(taskDto.getDate())
+                .isDeleted(false)
                 .updatedAt(Instant.now())
                 .updatedBy(loggedInUser)
                 .build();
@@ -174,7 +187,7 @@ public class TaskService {
                 .description(task.getDescription())
                 .taskStatus(task.getTaskStatus())
                 .date(task.getDate())
-                .assignee(task.getAssignee())
+                .assignee(task.getAssignee().getUserId())
                 .build();
     }
 

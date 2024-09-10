@@ -1,11 +1,12 @@
 package com.skywalker.task_organizer.resource;
 
-import com.skywalker.task_organizer.dto.LoginForm;
+import com.skywalker.task_organizer.dto.LoginRequest;
 import com.skywalker.task_organizer.dto.LoginResponse;
-import com.skywalker.task_organizer.dto.RegisterForm;
+import com.skywalker.task_organizer.dto.RegistrationForm;
 import com.skywalker.task_organizer.entity.User;
 import com.skywalker.task_organizer.service.AuthenticationService;
 import com.skywalker.task_organizer.service.JwtService;
+import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -33,7 +34,7 @@ public class AuthenticationResource {
     }
 
     @PostMapping("/register")
-    private ResponseEntity<User> register(@RequestBody RegisterForm registerForm){
+    private ResponseEntity<User> register(@Valid @RequestBody RegistrationForm registerForm){
         User registeredUser = null;
         try{
             registeredUser = authenticationService.signup(registerForm);
@@ -48,8 +49,8 @@ public class AuthenticationResource {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<LoginResponse> authenticate(@RequestBody LoginForm loginForm){
-        User authenticatedUser = authenticationService.authenticate(loginForm);
+    public ResponseEntity<LoginResponse> authenticate(@Valid @RequestBody LoginRequest loginRequest){
+        User authenticatedUser = authenticationService.authenticate(loginRequest);
         String jwtToken = jwtService.generateToken(authenticatedUser);
 
         LoginResponse loginResponse = new LoginResponse().builder()
