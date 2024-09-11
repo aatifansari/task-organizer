@@ -31,7 +31,7 @@ public class Address {
 
     private String city;
 
-    private Integer pincode;
+    private String pincode;
 
     private boolean isDeleted;
 

@@ -1,5 +1,7 @@
 package com.skywalker.task_organizer.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
 import lombok.Data;
@@ -37,4 +39,5 @@ public class RegistrationForm {
     @Valid
     @NotNull(message = "The address is required.")
     private AddressForm addressForm;
+
 }

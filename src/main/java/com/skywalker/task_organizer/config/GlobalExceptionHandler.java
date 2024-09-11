@@ -79,6 +79,9 @@ public class GlobalExceptionHandler {
             if(exception.getMessage().contains("assignee_id")){
                 errorDetail = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, exception.getMessage());
                 errorDetail.setProperty("reason", "Invalid Assignee");
+            }else if(exception.getMessage().contains("email")){
+                errorDetail = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, exception.getMessage());
+                errorDetail.setProperty("reason", "Duplicate Email");
             }else {
                 errorDetail = ProblemDetail.forStatus(HttpStatus.BAD_REQUEST);
                 errorDetail.setProperty("reason", "Check Request Body");
