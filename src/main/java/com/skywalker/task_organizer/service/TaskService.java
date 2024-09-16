@@ -61,7 +61,8 @@ public class TaskService {
         task.setCreatedAt(Instant.now());
         task.setCreatedBy(loggedInUser);
         Set<Attachment> attachments = new HashSet<>();
-        Optional.ofNullable(taskDto.getAttachmentsDtos()).orElse(Collections.emptyList())
+        Optional.ofNullable(taskDto.getAttachmentsDtos())
+                .orElse(Collections.emptyList())
                 .stream()
                 .filter(Objects::nonNull)
                 .forEach(attachmentDto -> {
@@ -70,7 +71,8 @@ public class TaskService {
                     attachments.add(attachment);
                 });
 
-        Set<Comment> comments = taskDto.getComments()
+        Set<Comment> comments = Optional.ofNullable(taskDto.getComments())
+                .orElse(Collections.emptyList())
                 .stream()
                 .map(s-> mapDtoToComment(s.getComment(), taskDto.getAssignee(), task))
                 .collect(Collectors.toSet());
