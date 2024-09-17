@@ -17,6 +17,9 @@ spring:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
         format_sql: true
+  redis:
+    host: localhost
+    port: 6379
 
 #JWT ARGS
 security:
@@ -26,9 +29,9 @@ security:
 
 logging:
   level:
-    org:
-      springframework:
-        security: DEBUG
+#    org.springframework.data.*.*: trace
+#    org.springframework.cache.*: trace
+    org.springframework.security: DEBUG
 #      hibernate:
 #        SQL: DEBUG
 #        orm:
