@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/tasks")
@@ -46,15 +47,10 @@ public class TaskResource {
     }
 
     @GetMapping("/{pageNo}/{pageSize}")
-    protected ResponseEntity<?> fetchAllTasks(@PathVariable("pageNo") Integer pageNo,
-                                              @PathVariable("pageSize") Integer pageSize,
-                                              @AuthenticationPrincipal User user){
-        String loggedInUser = user.getUserId();
-        try{
-            return ResponseEntity.ok(taskService.fetchAllByUserId(loggedInUser, pageNo, pageSize));
-        }catch (Exception e){
-            return new ResponseEntity<>("Unexpected Error Occured", HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+    protected ResponseEntity<Map<String, Object>> fetchAllTasks(@PathVariable("pageNo") Integer pageNo,
+                                                                @PathVariable("pageSize") Integer pageSize,
+                                                                @AuthenticationPrincipal User user) {
+        return ResponseEntity.ok(taskService.fetchAllByUserId(user, pageNo, pageSize));
     }
 
     @PutMapping("/{id}")

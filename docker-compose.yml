@@ -3,22 +3,33 @@
 services:
   task-db:
     container_name: task-db
-    image: postgres:latest
+    image: postgres:17.0
     environment:
       POSTGRES_DB: task_db
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: root
       PGDATA: /data/postgres
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
     networks:
       - task-organizer
     ports:
       - 5432:5432
+
+  redis-db:
+    container_name: redis-db
+    image: redis:7.4.0
+    networks:
+      - task-organizer
+    ports:
+      - 6379:6379
 
   task-org-service:
     build: "."
     container_name: task-org-service
     depends_on:
       - task-db
+      - redis-db
     networks:
       - task-organizer
     ports:
@@ -28,3 +39,7 @@ services:
 
 networks:
   task-organizer:
+
+volumes:
+  postgres_data:
+    external: true

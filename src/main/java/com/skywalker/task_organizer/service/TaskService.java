@@ -28,17 +28,15 @@ import java.util.stream.Collectors;
 
 public class TaskService {
 
-    private final StorageService storageService;
     private final TaskRepository taskRepository;
     private final AttachmentRepository attachmentRepository;
     private final CommentRepository commentRepository;
     private final UserRepository userRepository;
 
     @Autowired
-    public TaskService(StorageService storageService, TaskRepository taskRepository,
+    public TaskService(TaskRepository taskRepository,
                        AttachmentRepository attachmentRepository, CommentRepository commentRepository,
                        UserRepository userRepository){
-        this.storageService = storageService;
         this.taskRepository = taskRepository;
         this.attachmentRepository = attachmentRepository;
         this.commentRepository = commentRepository;
@@ -47,15 +45,6 @@ public class TaskService {
 
     @Transactional
     public TaskDto create(TaskDto taskDto, String loggedInUser){
-        // validate assignee
-//        User assignee = null;
-//        if(taskDto.getAssignee() != null){
-//            assignee = userRepository.getReferenceById(taskDto)  findById(taskDto.getAssignee())
-//                    .orElseThrow(() -> new EntityNotFoundException("Invalid Assignee"));
-//        }else{
-//            assignee = new User();
-//            assignee.setUserId(loggedInUser);
-//        }
         Task task = mapDtoToTask(taskDto, loggedInUser);
         task.setId(UUID.randomUUID().toString());
         task.setCreatedAt(Instant.now());
@@ -76,8 +65,8 @@ public class TaskService {
                 .stream()
                 .map(s-> mapDtoToComment(s.getComment(), taskDto.getAssignee(), task))
                 .collect(Collectors.toSet());
-//        task.setComments(comments);
-//        task.setAttachments(attachments);
+        task.setComments(comments);
+        task.setAttachments(attachments);
         Task savedTask = taskRepository.save(task);
         return mapTaskToDto(savedTask);
 
@@ -85,18 +74,18 @@ public class TaskService {
 
     public TaskDto fetchById(String id, String loggedInUser){
         Task task = taskRepository.findByIdAndIsDeleted(id, false).orElseThrow(EntityNotFoundException::new);
-        if(!loggedInUser.equals(task.getCreatedBy()) && !loggedInUser.equals(task.getAssignee())){
+        if(!loggedInUser.equals(task.getCreatedBy()) && !loggedInUser.equals(task.getAssignee().getUserId())){
             throw new UnauthorizedAccessException("");
         }
         return buildTaskDto(task);
     }
 
-    public Map<String, Object> fetchAllByUserId(String loggedInUser, Integer pageNo, Integer pageSize){
+    public Map<String, Object> fetchAllByUserId(User loggedInUser, Integer pageNo, Integer pageSize){
         Pageable pageable = PageRequest.of(pageNo, pageSize);
-        Page<Task> pageableTasks = taskRepository.findAllByAssigneeOrCreatedByAndIsDeleted(loggedInUser, loggedInUser, false, pageable);
-        pageableTasks.map(t->buildTaskDto(t));
+        Page<Task> pageableTasks = taskRepository.findAllByAssigneeOrCreatedByAndIsDeleted(loggedInUser, loggedInUser.getUserId(), false, pageable);
+        List<TaskDto> taskDtos = pageableTasks.map(this::buildTaskDto).getContent();
         Map<String, Object> response = new HashMap<>();
-        response.put("data", pageableTasks.get());
+        response.put("data", taskDtos);
         response.put("totalEntries", pageableTasks.getTotalElements());
         response.put("pageNo", pageNo);
         return response;
@@ -120,7 +109,7 @@ public class TaskService {
             throw new BadRequestException();
         }
         Task task = taskRepository.findByIdAndIsDeleted(taskId, false).orElseThrow(EntityNotFoundException::new);
-        if(!loggedInUser.equals(task.getCreatedBy()) && !loggedInUser.equals(task.getAssignee())){
+        if(!loggedInUser.equals(task.getCreatedBy()) && !loggedInUser.equals(task.getAssignee().getUserId())){
             throw new UnauthorizedAccessException();
         }
         task.setTaskStatus(taskStatus);
@@ -135,7 +124,7 @@ public class TaskService {
             throw new BadRequestException();
         }
         Task task = taskRepository.findByIdAndIsDeleted(taskId, false).orElseThrow(EntityNotFoundException::new);
-        if(!loggedInUser.equals(task.getCreatedBy()) && !loggedInUser.equals(task.getAssignee())){
+        if(!loggedInUser.equals(task.getCreatedBy()) && !loggedInUser.equals(task.getAssignee().getUserId())){
             throw new UnauthorizedAccessException();
         }
         Set<Comment> existingComments = task.getComments();
@@ -160,9 +149,9 @@ public class TaskService {
 
     private TaskDto buildTaskDto(Task task){
         TaskDto taskDto = mapTaskToDto(task);
-        List<CommentDto> comments = task.getComments().stream().map(c->mapCommentToDto(c)).collect(Collectors.toList());
+        List<CommentDto> comments = task.getComments().stream().map(this::mapCommentToDto).collect(Collectors.toList());
         List<AttachmentsDto> attachmentsDtos = task.getAttachments().stream()
-                .map(attach -> mapAttachmentToDto(attach)).collect(Collectors.toList());
+                .map(this::mapAttachmentToDto).collect(Collectors.toList());
         taskDto.setComments(comments);
         taskDto.setAttachmentsDtos(attachmentsDtos);
         return taskDto;

@@ -3,10 +3,9 @@ package com.skywalker.task_organizer.config;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.skywalker.task_organizer.dto.UserDetailsCacheData;
 import com.skywalker.task_organizer.entity.User;
-import com.skywalker.task_organizer.repository.UserDetailsCacheDataRepository;
+import com.skywalker.task_organizer.cache.UserDetailsCacheDataRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -62,6 +61,8 @@ public class UserCacheImpl implements UserCache {
         }catch(JsonProcessingException e){
             LOGGER.error("Serialization Error {}", e);
             throw new RuntimeException(e);
+        }catch(Exception e){
+            LOGGER.error("Unexpected Error", e);
         }
         UserDetailsCacheData cacheData = new UserDetailsCacheData(username, userDetailsAsString);
         userDetailsCacheDataRepository.save(cacheData);

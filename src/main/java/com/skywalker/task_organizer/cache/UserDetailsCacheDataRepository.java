@@ -1,4 +1,4 @@
-package com.skywalker.task_organizer.repository;
+package com.skywalker.task_organizer.cache;
 
 import com.skywalker.task_organizer.dto.UserDetailsCacheData;
 import org.springframework.data.repository.CrudRepository;

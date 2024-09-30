@@ -4,6 +4,8 @@ import com.skywalker.task_organizer.exception.BadRequestException;
 import com.skywalker.task_organizer.exception.EntityNotFoundException;
 import io.jsonwebtoken.ExpiredJwtException;
 import jakarta.servlet.http.HttpServletRequest;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
@@ -22,6 +24,8 @@ import java.util.*;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(GlobalExceptionHandler.class);
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<?> notValid(MethodArgumentNotValidException ex, HttpServletRequest request) {
         List<String> errors = new ArrayList<>();
@@ -37,7 +41,6 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(Exception.class)
     public ProblemDetail handleSecurityException(Exception exception){
         ProblemDetail errorDetail = null;
-        exception.printStackTrace();
 
         if(exception instanceof BadCredentialsException){
             errorDetail = ProblemDetail.forStatusAndDetail(HttpStatusCode.valueOf(401), exception.getMessage());
@@ -61,8 +64,7 @@ public class GlobalExceptionHandler {
         }
 
         if(exception instanceof ExpiredJwtException){
-            errorDetail = ProblemDetail.forStatusAndDetail(HttpStatusCode.valueOf(403), exception.getMessage());
-            errorDetail.setProperty("description", "JWT token has expired");
+            errorDetail = ProblemDetail.forStatusAndDetail(HttpStatusCode.valueOf(403), "Token Expired");
         }
 
         if(exception instanceof BadRequestException){
